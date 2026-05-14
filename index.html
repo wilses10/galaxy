@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cosmographia — Atlas des Mondes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --void: #0a0a0f;
+    --void-soft: #12121a;
+    --paper: #f4f1ea;
+    --paper-dim: #c9c4b8;
+    --gold: #d4a857;
+    --rust: #b8542d;
+    --ice: #7ba7c7;
+    --plasma: #c84a6e;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--void);
+    color: var(--paper);
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    line-height: 1.6;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* Étoiles de fond animées */
+  .stars {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 0;
+    pointer-events: none;
+    background-image:
+      radial-gradient(1px 1px at 20% 30%, white, transparent),
+      radial-gradient(1px 1px at 60% 70%, white, transparent),
+      radial-gradient(1px 1px at 50% 50%, white, transparent),
+      radial-gradient(2px 2px at 80% 10%, white, transparent),
+      radial-gradient(1px 1px at 90% 60%, white, transparent),
+      radial-gradient(1px 1px at 33% 80%, white, transparent),
+      radial-gradient(1px 1px at 15% 90%, white, transparent),
+      radial-gradient(2px 2px at 70% 40%, rgba(255,255,255,0.7), transparent),
+      radial-gradient(1px 1px at 45% 15%, white, transparent),
+      radial-gradient(1px 1px at 5% 50%, white, transparent);
+    background-size: 200% 200%;
+    background-repeat: repeat;
+    animation: drift 120s linear infinite;
+    opacity: 0.6;
+  }
+
+  @keyframes drift {
+    from { background-position: 0 0; }
+    to { background-position: 200% 200%; }
+  }
+
+  /* Bruit de grain pour la texture */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
+    opacity: 0.08;
+    pointer-events: none;
+    z-index: 1;
+    mix-blend-mode: overlay;
+  }
+
+  main { position: relative; z-index: 2; }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    padding: 4rem 6rem;
+    position: relative;
+    gap: 4rem;
+  }
+
+  .hero-left {
+    z-index: 3;
+  }
+
+  .eyebrow {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 2rem;
+    opacity: 0;
+    animation: fadeUp 1s ease 0.2s forwards;
+  }
+
+  .hero h1 {
+    font-size: clamp(3.5rem, 8vw, 7.5rem);
+    font-weight: 300;
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+    margin-bottom: 2rem;
+    opacity: 0;
+    animation: fadeUp 1.2s ease 0.4s forwards;
+  }
+
+  .hero h1 em {
+    font-style: italic;
+    color: var(--gold);
+    font-weight: 400;
+  }
+
+  .hero-tagline {
+    font-size: 1.25rem;
+    max-width: 32rem;
+    color: var(--paper-dim);
+    margin-bottom: 3rem;
+    font-style: italic;
+    opacity: 0;
+    animation: fadeUp 1s ease 0.6s forwards;
+  }
+
+  .meta-line {
+    display: flex;
+    gap: 3rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--paper-dim);
+    opacity: 0;
+    animation: fadeUp 1s ease 0.8s forwards;
+  }
+
+  .meta-line span strong {
+    color: var(--paper);
+    display: block;
+    font-size: 0.85rem;
+    margin-top: 0.3rem;
+  }
+
+  .hero-right {
+    position: relative;
+    height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Planète SVG centrale */
+  .planet-display {
+    width: 100%;
+    max-width: 500px;
+    aspect-ratio: 1;
+    position: relative;
+    animation: float 8s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+  }
+
+  /* Anneaux orbitaux */
+  .orbit {
+    position: absolute;
+    top: 50%; left: 50%;
+    border: 1px solid rgba(212, 168, 87, 0.15);
+    border-radius: 50%;
+    transform: translate(-50%, -50%) rotateX(75deg);
+  }
+  .orbit-1 { width: 130%; height: 130%; animation: spin 30s linear infinite; }
+  .orbit-2 { width: 160%; height: 160%; animation: spin 50s linear infinite reverse; border-color: rgba(123, 167, 199, 0.15); }
+  .orbit-3 { width: 190%; height: 190%; animation: spin 80s linear infinite; border-color: rgba(200, 74, 110, 0.1); }
+
+  @keyframes spin {
+    from { transform: translate(-50%, -50%) rotateX(75deg) rotateZ(0); }
+    to { transform: translate(-50%, -50%) rotateX(75deg) rotateZ(360deg); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* SECTION DIVIDER */
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    padding: 6rem 6rem 3rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+
+  .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, var(--gold), transparent);
+  }
+
+  /* PLANÈTES SECTION */
+  .planets-section {
+    padding: 2rem 6rem 8rem;
+  }
+
+  .section-title {
+    font-size: clamp(2.5rem, 5vw, 4.5rem);
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    margin-bottom: 1rem;
+    line-height: 1;
+  }
+
+  .section-title em {
+    font-style: italic;
+    color: var(--gold);
+  }
+
+  .section-intro {
+    font-size: 1.15rem;
+    color: var(--paper-dim);
+    max-width: 44rem;
+    margin-bottom: 5rem;
+    font-style: italic;
+  }
+
+  .planets-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1px;
+    background: rgba(244, 241, 234, 0.08);
+    border: 1px solid rgba(244, 241, 234, 0.08);
+  }
+
+  .planet-card {
+    background: var(--void);
+    padding: 3rem 2.5rem;
+    position: relative;
+    transition: background 0.6s ease;
+    cursor: default;
+  }
+
+  .planet-card:hover {
+    background: var(--void-soft);
+  }
+
+  .planet-number {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    color: var(--paper-dim);
+    margin-bottom: 1.5rem;
+  }
+
+  .planet-visual {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    margin-bottom: 2rem;
+    position: relative;
+    transition: transform 0.5s ease;
+  }
+
+  .planet-card:hover .planet-visual {
+    transform: scale(1.1) rotate(20deg);
+  }
+
+  .planet-name {
+    font-size: 2.2rem;
+    font-weight: 400;
+    margin-bottom: 0.3rem;
+    letter-spacing: -0.01em;
+  }
+
+  .planet-subtitle {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 1.5rem;
+  }
+
+  .planet-desc {
+    font-size: 1rem;
+    color: var(--paper-dim);
+    line-height: 1.7;
+    margin-bottom: 2rem;
+  }
+
+  .planet-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    padding-top: 1.5rem;
+    border-top: 1px dashed rgba(244, 241, 234, 0.15);
+  }
+
+  .stat label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--paper-dim);
+    display: block;
+    margin-bottom: 0.4rem;
+  }
+
+  .stat value {
+    font-size: 1rem;
+    color: var(--paper);
+    font-weight: 500;
+  }
+
+  /* Planètes visuelles individuelles */
+  .p-mercure { background: radial-gradient(circle at 30% 30%, #b8a08c, #5c4a3a 60%, #2a1f15); box-shadow: inset -8px -8px 16px rgba(0,0,0,0.5); }
+  .p-venus { background: radial-gradient(circle at 30% 30%, #f5d4a0, #c9954a 50%, #6b4515); box-shadow: inset -8px -8px 16px rgba(0,0,0,0.5); }
+  .p-terre { background: radial-gradient(circle at 30% 30%, #6ba8d4, #2d6b9c 40%, #1a3a5c); box-shadow: inset -8px -8px 16px rgba(0,0,0,0.5), 0 0 30px rgba(123, 167, 199, 0.2); }
+  .p-mars { background: radial-gradient(circle at 30% 30%, #d97548, #a04020 50%, #5c2010); box-shadow: inset -8px -8px 16px rgba(0,0,0,0.5); }
+  .p-jupiter { background: repeating-linear-gradient(180deg, #c9a888 0px, #a87a55 12px, #8a5a3a 20px, #b89070 30px, #d4a868 42px); box-shadow: inset -8px -8px 16px rgba(0,0,0,0.5); }
+  .p-saturne {
+    background: repeating-linear-gradient(180deg, #d4b888 0px, #b8985a 10px, #a07840 20px, #c8a868 30px);
+    box-shadow: inset -8px -8px 16px rgba(0,0,0,0.5);
+    position: relative;
+  }
+  .p-saturne::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: -25%;
+    width: 150%; height: 8px;
+    background: linear-gradient(to right, transparent, rgba(212, 168, 87, 0.6) 20%, rgba(212, 168, 87, 0.8) 50%, rgba(212, 168, 87, 0.6) 80%, transparent);
+    transform: translateY(-50%) rotate(-15deg);
+    border-radius: 50%;
+  }
+  .p-uranus { background: radial-gradient(circle at 30% 30%, #a8d4d0, #5a9a96 50%, #2a5550); box-shadow: inset -8px -8px 16px rgba(0,0,0,0.5); }
+  .p-neptune { background: radial-gradient(circle at 30% 30%, #5a78c8, #2a4898 50%, #15224a); box-shadow: inset -8px -8px 16px rgba(0,0,0,0.5), 0 0 25px rgba(90, 120, 200, 0.3); }
+
+  /* GALAXIES SECTION */
+  .galaxies-section {
+    padding: 6rem 6rem 8rem;
+    background: linear-gradient(180deg, transparent, var(--void-soft) 30%, var(--void-soft) 70%, transparent);
+    position: relative;
+  }
+
+  .galaxies-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    gap: 3rem;
+    margin-top: 4rem;
+  }
+
+  .galaxy-card {
+    position: relative;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid rgba(244, 241, 234, 0.1);
+    background: var(--void);
+    transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.6s;
+  }
+
+  .galaxy-card:hover {
+    transform: translateY(-8px);
+    border-color: var(--gold);
+  }
+
+  .galaxy-visual {
+    aspect-ratio: 16 / 10;
+    position: relative;
+    overflow: hidden;
+    background: #000;
+  }
+
+  .galaxy-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .galaxy-content {
+    padding: 2.5rem;
+  }
+
+  .galaxy-classification {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--ice);
+    margin-bottom: 0.8rem;
+  }
+
+  .galaxy-name {
+    font-size: 2rem;
+    font-weight: 400;
+    margin-bottom: 0.5rem;
+    font-style: italic;
+  }
+
+  .galaxy-distance {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--gold);
+    margin-bottom: 1.5rem;
+  }
+
+  .galaxy-desc {
+    color: var(--paper-dim);
+    line-height: 1.7;
+  }
+
+  /* QUOTE SECTION */
+  .quote-section {
+    padding: 10rem 6rem;
+    text-align: center;
+    position: relative;
+  }
+
+  .quote {
+    font-size: clamp(2rem, 4vw, 3.5rem);
+    font-weight: 300;
+    font-style: italic;
+    line-height: 1.25;
+    max-width: 60rem;
+    margin: 0 auto 2rem;
+    letter-spacing: -0.01em;
+  }
+
+  .quote::before {
+    content: '«';
+    color: var(--gold);
+    margin-right: 0.5rem;
+  }
+
+  .quote::after {
+    content: '»';
+    color: var(--gold);
+    margin-left: 0.5rem;
+  }
+
+  .quote-author {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--paper-dim);
+  }
+
+  /* FOOTER */
+  footer {
+    padding: 4rem 6rem 3rem;
+    border-top: 1px solid rgba(244, 241, 234, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--paper-dim);
+  }
+
+  footer .logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.5rem;
+    font-style: italic;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--paper);
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    .hero {
+      grid-template-columns: 1fr;
+      padding: 3rem 1.5rem;
+      gap: 3rem;
+    }
+    .hero-right { height: 50vh; }
+    .divider, .planets-section, .galaxies-section, .quote-section, footer {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+    .meta-line { flex-direction: column; gap: 1.5rem; }
+    footer { flex-direction: column; gap: 1.5rem; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stars"></div>
+
+<main>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-left">
+      <div class="eyebrow">Volume I — Édition 2026</div>
+      <h1>L'Atlas des <em>mondes</em><br>et des <em>galaxies</em></h1>
+      <p class="hero-tagline">Un voyage à travers les corps célestes qui peuplent le système solaire et au-delà, jusqu'aux confins observables de l'univers.</p>
+      <div class="meta-line">
+        <span>Planètes documentées <strong>08</strong></span>
+        <span>Galaxies répertoriées <strong>06</strong></span>
+        <span>Années-lumière couvertes <strong>~13.8 Mds</strong></span>
+      </div>
+    </div>
+    <div class="hero-right">
+      <div class="planet-display">
+        <div class="orbit orbit-1"></div>
+        <div class="orbit orbit-2"></div>
+        <div class="orbit orbit-3"></div>
+        <svg viewBox="0 0 400 400" style="width: 100%; height: 100%;">
+          <defs>
+            <radialGradient id="mainPlanet" cx="35%" cy="35%">
+              <stop offset="0%" stop-color="#d4a857"/>
+              <stop offset="40%" stop-color="#8b5a2b"/>
+              <stop offset="100%" stop-color="#2a1810"/>
+            </radialGradient>
+            <radialGradient id="atmosphere" cx="50%" cy="50%">
+              <stop offset="70%" stop-color="rgba(212, 168, 87, 0)"/>
+              <stop offset="85%" stop-color="rgba(212, 168, 87, 0.3)"/>
+              <stop offset="100%" stop-color="rgba(212, 168, 87, 0)"/>
+            </radialGradient>
+          </defs>
+          <circle cx="200" cy="200" r="180" fill="url(#atmosphere)"/>
+          <circle cx="200" cy="200" r="140" fill="url(#mainPlanet)"/>
+          <ellipse cx="200" cy="200" rx="220" ry="40" fill="none" stroke="rgba(212, 168, 87, 0.4)" stroke-width="2" transform="rotate(-15 200 200)"/>
+          <ellipse cx="200" cy="200" rx="200" ry="35" fill="none" stroke="rgba(212, 168, 87, 0.6)" stroke-width="1" transform="rotate(-15 200 200)"/>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- DIVIDER -->
+  <div class="divider">Chapitre Premier · Le Système Solaire</div>
+
+  <!-- PLANÈTES -->
+  <section class="planets-section">
+    <h2 class="section-title">Les huit <em>mondes</em></h2>
+    <p class="section-intro">Du brûlant Mercure aux brumes glaciales de Neptune, chacune possède une signature géologique et atmosphérique qui lui est propre.</p>
+
+    <div class="planets-grid">
+
+      <article class="planet-card">
+        <div class="planet-number">N° 01 / VIII</div>
+        <div class="planet-visual p-mercure"></div>
+        <h3 class="planet-name">Mercure</h3>
+        <div class="planet-subtitle">Le messager rocheux</div>
+        <p class="planet-desc">La plus petite planète du système, criblée de cratères, oscillant entre 430°C le jour et −180°C la nuit. Une journée mercurienne dure 176 jours terrestres.</p>
+        <div class="planet-stats">
+          <div class="stat"><label>Diamètre</label><value>4 879 km</value></div>
+          <div class="stat"><label>Distance au Soleil</label><value>57,9 M km</value></div>
+        </div>
+      </article>
+
+      <article class="planet-card">
+        <div class="planet-number">N° 02 / VIII</div>
+        <div class="planet-visual p-venus"></div>
+        <h3 class="planet-name">Vénus</h3>
+        <div class="planet-subtitle">L'étoile du berger</div>
+        <p class="planet-desc">Enveloppée d'une atmosphère étouffante de dioxyde de carbone, sa surface culmine à 465°C. Vénus tourne en sens rétrograde, à contre-courant du reste du système.</p>
+        <div class="planet-stats">
+          <div class="stat"><label>Diamètre</label><value>12 104 km</value></div>
+          <div class="stat"><label>Distance au Soleil</label><value>108,2 M km</value></div>
+        </div>
+      </article>
+
+      <article class="planet-card">
+        <div class="planet-number">N° 03 / VIII</div>
+        <div class="planet-visual p-terre"></div>
+        <h3 class="planet-name">Terre</h3>
+        <div class="planet-subtitle">Le pâle point bleu</div>
+        <p class="planet-desc">Seule planète connue à abriter la vie. 71% de sa surface est recouverte d'océans, et son satellite naturel — la Lune — stabilise son inclinaison axiale.</p>
+        <div class="planet-stats">
+          <div class="stat"><label>Diamètre</label><value>12 742 km</value></div>
+          <div class="stat"><label>Distance au Soleil</label><value>149,6 M km</value></div>
+        </div>
+      </article>
+
+      <article class="planet-card">
+        <div class="planet-number">N° 04 / VIII</div>
+        <div class="planet-visual p-mars"></div>
+        <h3 class="planet-name">Mars</h3>
+        <div class="planet-subtitle">La planète rouge</div>
+        <p class="planet-desc">Sa teinte ocre provient de l'oxyde de fer en surface. Mars abrite Olympus Mons, le plus haut volcan du système solaire, culminant à 22 km au-dessus des plaines.</p>
+        <div class="planet-stats">
+          <div class="stat"><label>Diamètre</label><value>6 779 km</value></div>
+          <div class="stat"><label>Distance au Soleil</label><value>227,9 M km</value></div>
+        </div>
+      </article>
+
+      <article class="planet-card">
+        <div class="planet-number">N° 05 / VIII</div>
+        <div class="planet-visual p-jupiter"></div>
+        <h3 class="planet-name">Jupiter</h3>
+        <div class="planet-subtitle">Le géant gazeux</div>
+        <p class="planet-desc">Plus massive que toutes les autres planètes réunies. Sa Grande Tache Rouge est un anticyclone qui rugit depuis au moins quatre siècles, deux fois plus large que la Terre.</p>
+        <div class="planet-stats">
+          <div class="stat"><label>Diamètre</label><value>139 820 km</value></div>
+          <div class="stat"><label>Lunes connues</label><value>95</value></div>
+        </div>
+      </article>
+
+      <article class="planet-card">
+        <div class="planet-number">N° 06 / VIII</div>
+        <div class="planet-visual p-saturne"></div>
+        <h3 class="planet-name">Saturne</h3>
+        <div class="planet-subtitle">Le seigneur des anneaux</div>
+        <p class="planet-desc">Ses anneaux, composés de milliards de fragments de glace et de roche, s'étendent sur 282 000 km mais ne font que quelques mètres d'épaisseur. Sa densité est si faible qu'elle flotterait sur l'eau.</p>
+        <div class="planet-stats">
+          <div class="stat"><label>Diamètre</label><value>116 460 km</value></div>
+          <div class="stat"><label>Lunes connues</label><value>146</value></div>
+        </div>
+      </article>
+
+      <article class="planet-card">
+        <div class="planet-number">N° 07 / VIII</div>
+        <div class="planet-visual p-uranus"></div>
+        <h3 class="planet-name">Uranus</h3>
+        <div class="planet-subtitle">La géante de glace</div>
+        <p class="planet-desc">Unique en son genre : son axe est incliné à 98°, la faisant rouler sur son orbite. Sa teinte cyan provient du méthane atmosphérique qui absorbe la lumière rouge.</p>
+        <div class="planet-stats">
+          <div class="stat"><label>Diamètre</label><value>50 724 km</value></div>
+          <div class="stat"><label>Distance au Soleil</label><value>2,87 Mds km</value></div>
+        </div>
+      </article>
+
+      <article class="planet-card">
+        <div class="planet-number">N° 08 / VIII</div>
+        <div class="planet-visual p-neptune"></div>
+        <h3 class="planet-name">Neptune</h3>
+        <div class="planet-subtitle">Le veilleur azur</div>
+        <p class="planet-desc">La planète la plus venteuse du système : ses tempêtes atteignent 2 100 km/h. Découverte mathématiquement avant d'être observée, par calcul des perturbations d'Uranus.</p>
+        <div class="planet-stats">
+          <div class="stat"><label>Diamètre</label><value>49 244 km</value></div>
+          <div class="stat"><label>Distance au Soleil</label><value>4,5 Mds km</value></div>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- DIVIDER -->
+  <div class="divider">Chapitre Second · Au-delà de la Voie Lactée</div>
+
+  <!-- GALAXIES -->
+  <section class="galaxies-section">
+    <h2 class="section-title">Les <em>archipels</em> cosmiques</h2>
+    <p class="section-intro">L'univers observable abrite environ deux mille milliards de galaxies. Chacune contient des centaines de milliards d'étoiles. Voici quelques-unes des plus remarquables.</p>
+
+    <div class="galaxies-grid">
+
+      <article class="galaxy-card">
+        <div class="galaxy-visual">
+          <svg class="galaxy-svg" viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <radialGradient id="g-mw" cx="50%" cy="50%">
+                <stop offset="0%" stop-color="#fff5d4" stop-opacity="1"/>
+                <stop offset="20%" stop-color="#f4d488" stop-opacity="0.8"/>
+                <stop offset="60%" stop-color="#7ba7c7" stop-opacity="0.4"/>
+                <stop offset="100%" stop-color="#1a1a3a" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+            <rect width="400" height="250" fill="#000"/>
+            <ellipse cx="200" cy="125" rx="180" ry="20" fill="url(#g-mw)" transform="rotate(-12 200 125)"/>
+            <ellipse cx="200" cy="125" rx="60" ry="40" fill="url(#g-mw)" opacity="0.8"/>
+            <circle cx="200" cy="125" r="8" fill="#fff5d4"/>
+            <!-- étoiles -->
+            <circle cx="80" cy="60" r="1" fill="white"/>
+            <circle cx="320" cy="40" r="1" fill="white"/>
+            <circle cx="350" cy="190" r="1" fill="white"/>
+            <circle cx="50" cy="200" r="1" fill="white"/>
+            <circle cx="160" cy="30" r="1.5" fill="white"/>
+            <circle cx="280" cy="220" r="1" fill="white"/>
+          </svg>
+        </div>
+        <div class="galaxy-content">
+          <div class="galaxy-classification">Spirale barrée · SBbc</div>
+          <h3 class="galaxy-name">Voie Lactée</h3>
+          <div class="galaxy-distance">— Notre demeure —</div>
+          <p class="galaxy-desc">Notre galaxie hôte. Environ 200 milliards d'étoiles disposées en spirale autour d'un trou noir supermassif, Sagittarius A*. Diamètre estimé : 100 000 années-lumière.</p>
+        </div>
+      </article>
+
+      <article class="galaxy-card">
+        <div class="galaxy-visual">
+          <svg class="galaxy-svg" viewBox="0 0 400 250">
+            <defs>
+              <radialGradient id="g-and" cx="50%" cy="50%">
+                <stop offset="0%" stop-color="#ffe0c0"/>
+                <stop offset="30%" stop-color="#d49060" stop-opacity="0.8"/>
+                <stop offset="70%" stop-color="#7050a0" stop-opacity="0.4"/>
+                <stop offset="100%" stop-color="#1a0a2a" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+            <rect width="400" height="250" fill="#000"/>
+            <ellipse cx="200" cy="125" rx="170" ry="60" fill="url(#g-and)" transform="rotate(25 200 125)"/>
+            <ellipse cx="200" cy="125" rx="50" ry="35" fill="#ffe0c0" opacity="0.9"/>
+            <circle cx="200" cy="125" r="6" fill="#fff"/>
+            <circle cx="100" cy="50" r="1" fill="white"/>
+            <circle cx="340" cy="200" r="1" fill="white"/>
+            <circle cx="60" cy="180" r="1" fill="white"/>
+          </svg>
+        </div>
+        <div class="galaxy-content">
+          <div class="galaxy-classification">Spirale · SA(s)b</div>
+          <h3 class="galaxy-name">Andromède</h3>
+          <div class="galaxy-distance">2,537 millions d'années-lumière</div>
+          <p class="galaxy-desc">Notre voisine la plus proche, et la plus massive du Groupe Local. Elle fonce vers nous à 110 km/s et fusionnera avec la Voie Lactée dans environ 4,5 milliards d'années.</p>
+        </div>
+      </article>
+
+      <article class="galaxy-card">
+        <div class="galaxy-visual">
+          <svg class="galaxy-svg" viewBox="0 0 400 250">
+            <defs>
+              <radialGradient id="g-whirl" cx="50%" cy="50%">
+                <stop offset="0%" stop-color="#fff5d4"/>
+                <stop offset="20%" stop-color="#c8a868" stop-opacity="0.9"/>
+                <stop offset="60%" stop-color="#7ba7c7" stop-opacity="0.5"/>
+                <stop offset="100%" stop-color="#0a0a2a" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+            <rect width="400" height="250" fill="#000"/>
+            <g transform="translate(200, 125)">
+              <path d="M 0,0 Q 80,-40 100,0 T 60,80 T -40,60 T -80,-30 T 20,-70 T 70,-20" fill="none" stroke="#7ba7c7" stroke-width="6" opacity="0.6"/>
+              <path d="M 0,0 Q -80,40 -100,0 T -60,-80 T 40,-60 T 80,30" fill="none" stroke="#c8a868" stroke-width="6" opacity="0.6"/>
+              <circle cx="0" cy="0" r="30" fill="url(#g-whirl)"/>
+              <circle cx="0" cy="0" r="6" fill="#fff"/>
+            </g>
+            <circle cx="80" cy="40" r="1" fill="white"/>
+            <circle cx="350" cy="180" r="1" fill="white"/>
+          </svg>
+        </div>
+        <div class="galaxy-content">
+          <div class="galaxy-classification">Spirale · SA(s)bc</div>
+          <h3 class="galaxy-name">Tourbillon (M51)</h3>
+          <div class="galaxy-distance">23 millions d'années-lumière</div>
+          <p class="galaxy-desc">Galaxie spirale emblématique dans la constellation des Chiens de Chasse, en interaction gravitationnelle avec une galaxie compagne NGC 5195 qui déforme ses bras.</p>
+        </div>
+      </article>
+
+      <article class="galaxy-card">
+        <div class="galaxy-visual">
+          <svg class="galaxy-svg" viewBox="0 0 400 250">
+            <defs>
+              <radialGradient id="g-som" cx="50%" cy="50%">
+                <stop offset="0%" stop-color="#ffd890"/>
+                <stop offset="50%" stop-color="#a06030" stop-opacity="0.8"/>
+                <stop offset="100%" stop-color="#0a0a1a" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+            <rect width="400" height="250" fill="#000"/>
+            <ellipse cx="200" cy="125" rx="160" ry="20" fill="#1a1a2a"/>
+            <ellipse cx="200" cy="115" rx="155" ry="15" fill="url(#g-som)"/>
+            <ellipse cx="200" cy="115" rx="60" ry="35" fill="#ffd890" opacity="0.9"/>
+            <ellipse cx="200" cy="125" rx="170" ry="6" fill="#000" opacity="0.8"/>
+            <circle cx="120" cy="50" r="1" fill="white"/>
+            <circle cx="310" cy="210" r="1" fill="white"/>
+          </svg>
+        </div>
+        <div class="galaxy-content">
+          <div class="galaxy-classification">Lenticulaire · SA(s)a</div>
+          <h3 class="galaxy-name">Sombrero (M104)</h3>
+          <div class="galaxy-distance">29,3 millions d'années-lumière</div>
+          <p class="galaxy-desc">Son disque de poussière proéminent et son bulbe central lumineux lui donnent l'apparence d'un chapeau mexicain. Elle abrite un trou noir d'un milliard de masses solaires.</p>
+        </div>
+      </article>
+
+      <article class="galaxy-card">
+        <div class="galaxy-visual">
+          <svg class="galaxy-svg" viewBox="0 0 400 250">
+            <defs>
+              <radialGradient id="g-cig" cx="50%" cy="50%">
+                <stop offset="0%" stop-color="#ffd0a0"/>
+                <stop offset="50%" stop-color="#c84a6e" stop-opacity="0.7"/>
+                <stop offset="100%" stop-color="#1a0a1a" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+            <rect width="400" height="250" fill="#000"/>
+            <ellipse cx="200" cy="125" rx="160" ry="35" fill="url(#g-cig)" transform="rotate(-15 200 125)"/>
+            <ellipse cx="200" cy="125" rx="100" ry="20" fill="#ffd0a0" opacity="0.8" transform="rotate(-15 200 125)"/>
+            <ellipse cx="200" cy="125" rx="20" ry="5" fill="#fff" transform="rotate(-15 200 125)"/>
+            <!-- jets -->
+            <ellipse cx="200" cy="125" rx="10" ry="60" fill="#c84a6e" opacity="0.4" transform="rotate(75 200 125)"/>
+            <circle cx="60" cy="70" r="1" fill="white"/>
+            <circle cx="340" cy="190" r="1" fill="white"/>
+          </svg>
+        </div>
+        <div class="galaxy-content">
+          <div class="galaxy-classification">Irrégulière starburst · I0</div>
+          <h3 class="galaxy-name">Cigare (M82)</h3>
+          <div class="galaxy-distance">11,5 millions d'années-lumière</div>
+          <p class="galaxy-desc">Galaxie à flambée d'étoiles : elle forme dix fois plus d'étoiles que la Voie Lactée. Ses émissions de gaz, photographiées en rouge, jaillissent perpendiculairement à son plan.</p>
+        </div>
+      </article>
+
+      <article class="galaxy-card">
+        <div class="galaxy-visual">
+          <svg class="galaxy-svg" viewBox="0 0 400 250">
+            <defs>
+              <radialGradient id="g-tri" cx="50%" cy="50%">
+                <stop offset="0%" stop-color="#e0e8ff"/>
+                <stop offset="40%" stop-color="#7080c0" stop-opacity="0.7"/>
+                <stop offset="100%" stop-color="#0a1030" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+            <rect width="400" height="250" fill="#000"/>
+            <g transform="translate(200, 125)">
+              <path d="M 0,0 Q 60,-30 90,10 T 50,80 T -50,60 T -90,-20 T -30,-80" fill="none" stroke="#7080c0" stroke-width="8" opacity="0.5"/>
+              <circle cx="0" cy="0" r="50" fill="url(#g-tri)"/>
+              <circle cx="0" cy="0" r="8" fill="#fff"/>
+            </g>
+            <circle cx="80" cy="40" r="1" fill="white"/>
+            <circle cx="350" cy="200" r="1" fill="white"/>
+          </svg>
+        </div>
+        <div class="galaxy-content">
+          <div class="galaxy-classification">Spirale · SA(s)cd</div>
+          <h3 class="galaxy-name">Triangle (M33)</h3>
+          <div class="galaxy-distance">2,73 millions d'années-lumière</div>
+          <p class="galaxy-desc">Troisième plus grande galaxie du Groupe Local. Visible à l'œil nu dans des cieux très sombres, c'est l'objet le plus éloigné qu'un humain puisse observer sans instrument.</p>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- QUOTE -->
+  <section class="quote-section">
+    <p class="quote">Nous sommes faits de poussière d'étoiles. Nous sommes une façon pour le cosmos de se connaître lui-même.</p>
+    <p class="quote-author">— Carl Sagan</p>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="logo">Cosmographia</div>
+    <div>Atlas céleste · 2026</div>
+    <div>Ad astra per aspera</div>
+  </footer>
+
+</main>
+
+</body>
+</html>
