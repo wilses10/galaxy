@@ -32,8 +32,9 @@ jobs:
       - name: Trigger CodeDeploy
         run: |
           aws deploy create-deployment \
-            --application-name galaxy-deployment \
-            --deployment-group-name galaxy-deployment-group \
+            --application-name deployment \
+            --deployment-group-name deployment-group \
             --s3-location bucket=johanna1983,key=deployment.zip,bundleType=zip \
+            --file-exists-behavior OVERWRITE \
             --region us-east-1
             
