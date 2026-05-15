@@ -1,0 +1,22 @@
+phases:
+  install:
+    runtime-versions:
+      nodejs: latest
+    commands:
+      - echo "install phase"
+      - npm install -g htmlhint
+  pre_build:
+    commands:
+      - echo "pre-build phase-basic checks"
+      - ls
+      - test -f index.html
+  build: 
+    commands:
+      - echo "we are in the build block"
+      - htmlhint index.html
+  post_build:
+    commands:
+      - echo "we are in the post build phase"
+artifacts:
+  files:
+    - index.html    
