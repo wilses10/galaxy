@@ -34,4 +34,5 @@ jobs:
           aws deploy create-deployment \
             --application-name deployment \
             --deployment-group-name deployment-group \
+            # fin
             --s3-location bucket=johanna1983,key=deployment.zip,bundleType=zip
