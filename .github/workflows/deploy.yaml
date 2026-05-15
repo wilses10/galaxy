@@ -33,7 +33,7 @@ jobs:
         run: |
           aws deploy create-deployment \
             --application-name galaxy-deployment \
-            --deployment-group-name galaxy-deployment-goup \
+            --deployment-group-name galaxy-deployment-group \
             --s3-location bucket=johanna1983,key=deployment.zip,bundleType=zip \
             --region us-east-1
-            # fin
+            
